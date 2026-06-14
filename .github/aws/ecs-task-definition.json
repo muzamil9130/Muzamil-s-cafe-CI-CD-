@@ -4,13 +4,13 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
-  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
-  "taskRoleArn":      "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskRole",
+  "executionRoleArn": "arn:aws:iam::462532071190:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::462532071190:role/ecsTaskRole",
 
   "containerDefinitions": [
     {
-      "name": "cafe-app",
-      "image": "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cafe-muzamil:latest",
+      "name": "cafe-muzamil",
+      "image": "462532071190.dkr.ecr.us-east-1.amazonaws.com/cafe-muzamil:latest",
       "essential": true,
       "portMappings": [
         {
@@ -26,15 +26,15 @@
       "secrets": [
         {
           "name":      "MONGODB_URI",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:YOUR_ACCOUNT_ID:secret:cafe/MONGODB_URI"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:462532071190:secret:cafe/MONGODB_URI"
         },
         {
           "name":      "GEMINI_API_KEY",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:YOUR_ACCOUNT_ID:secret:cafe/GEMINI_API_KEY"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:462532071190:secret:cafe/GEMINI_API_KEY"
         },
         {
           "name":      "APP_URL",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:YOUR_ACCOUNT_ID:secret:cafe/APP_URL"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:462532071190:secret:cafe/APP_URL"
         }
       ],
       "logConfiguration": {
