@@ -62,6 +62,78 @@
 
 ---
 
+## 📐 System Architecture & Components
+
+Below is the high-level system architecture and operational flow of the Muzamil's Cafe application, detailing both the runtime infrastructure and the automated CI/CD lifecycle:
+
+```mermaid
+graph TD
+    subgraph Client Space
+        Browser[Client Browser]
+    end
+
+    subgraph AWS Cloud - us-east-1
+        subgraph VPC Network - Public Subnet
+            ALB[Application Load Balancer / DNS]
+            ECS[AWS ECS Service - Fargate]
+            DockerApp[Muzamil's Cafe App Container]
+            MongoDB[(MongoDB Instance / Atlas)]
+        end
+        
+        ECR[(Amazon ECR Private Registry)]
+        SecretsMgr[AWS Secrets Manager]
+    end
+
+    subgraph GitHub Actions Pipeline
+        GitPush[git push main]
+        CIJob[CI Job: Lint, Typecheck, Build, ECR Push]
+        CDJob[CD Job: OIDC Login, Update Task Def, Deploy]
+    end
+
+    Browser -->|HTTP Requests| ALB
+    ALB -->|Forward Traffic| ECS
+    ECS -->|Runs Task| DockerApp
+    DockerApp -->|Saves Orders & Reservations| MongoDB
+    DockerApp -->|Retrieves Keys at Boot| SecretsMgr
+    
+    GitPush -->|Triggers| CIJob
+    CIJob -->|Pushes Docker Image| ECR
+    CIJob -->|Triggers on Success| CDJob
+    CDJob -->|Pushes Task Revision| ECS
+    ECS -->|Pulls Image| ECR
+```
+
+### Component Breakdown
+
+1. **Frontend Client (React 19 & Vite 6):**
+   * Built as a single-page application (SPA) using TypeScript and Tailwind CSS 4.
+   * Compiles into a optimized static production bundle (`dist/`) during the CI phase.
+   * Serves static content via Express router static assets.
+
+2. **Backend Server (Node.js & Express):**
+   * Handles REST API requests under `/api` for database operations (table reservations, order submissions).
+   * Communicates with **Google Gemini AI** to power the automated cafe support bot.
+   * Implements secure health checking endpoints for Fargate service monitoring.
+
+3. **Data Layer (MongoDB & Mongoose):**
+   * Persists reservations and order histories.
+   * Configured using secure URI strings fetched dynamically from environment settings.
+
+4. **Containerization (Docker & Docker Compose):**
+   * Uses a multi-stage `Dockerfile` targeting `node:20-alpine` as a builder and production runner.
+   * Minimizes attack surface and image size (under 150MB) by only copying the generated bundle and production dependencies.
+
+5. **Secrets Management (AWS Secrets Manager):**
+   * Holds sensitive keys (`MONGODB_URI`, `GEMINI_API_KEY`, `APP_URL`) securely at rest.
+   * Decrypts and injects values as environment variables directly to the Fargate task at boot.
+
+6. **Secured CI/CD Workflows:**
+   * **CI script:** [.github/workflows/ci.yml](file:///.github/workflows/ci.yml)
+   * **CD script:** [.github/workflows/cd.yml](file:///.github/workflows/cd.yml)
+   * Integrates keyless **IAM OIDC AssumeRole** token exchange between GitHub and AWS, removing the need to store static long-lived credentials for deployments.
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
