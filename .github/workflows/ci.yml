@@ -1,7 +1,5 @@
-##############################################################
 # CI Pipeline – Muzamil's Cafe
-#
-# Triggers : push / PR to main or master
+# Triggering a new run with corrected syntax.
 # Jobs     : lint → typecheck → build → docker-build → push ECR
 ##############################################################
 name: CI – Build, Lint & Push to ECR
