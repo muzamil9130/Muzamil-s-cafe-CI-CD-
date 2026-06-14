@@ -1,0 +1,91 @@
+##############################################################
+# CD Pipeline – Muzamil's Cafe
+#
+# Trigger  : Successful completion of the CI workflow on main/master
+# Strategy : Blue/Green deploy via ECS rolling update
+##############################################################
+name: CD – Deploy to AWS ECS
+
+on:
+  workflow_run:
+    workflows: ["CI – Build, Lint & Push to ECR"]
+    types: [completed]
+    branches: [main, master]
+
+env:
+  AWS_REGION:      ${{ vars.AWS_REGION }}
+  ECR_REPOSITORY:  ${{ vars.ECR_REPOSITORY }}
+  ECS_CLUSTER:     ${{ vars.ECS_CLUSTER }}        # e.g. cafe-muzamil-cluster
+  ECS_SERVICE:     ${{ vars.ECS_SERVICE }}        # e.g. cafe-muzamil-service
+  CONTAINER_NAME:  ${{ vars.CONTAINER_NAME }}     # must match task definition
+  TASK_DEFINITION: ${{ vars.TASK_DEFINITION }}    # e.g. cafe-muzamil-task
+
+jobs:
+  deploy:
+    name: Deploy to ECS Fargate
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: ⬇️  Checkout source
+        uses: actions/checkout@v4
+
+      - name: 🔐  Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region:     ${{ env.AWS_REGION }}
+
+      - name: 🔑  Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ── Resolve the exact image SHA that CI just pushed ──────
+      - name: 🏷️  Resolve image URI
+        id: image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          SHA:      ${{ github.event.workflow_run.head_sha }}
+        run: |
+          echo "uri=$REGISTRY/$ECR_REPOSITORY:$SHA" >> "$GITHUB_OUTPUT"
+
+      # ── Download the current ECS task definition ─────────────
+      - name: 📥  Download current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "$TASK_DEFINITION" \
+            --query taskDefinition \
+            > task-def.json
+
+      # ── Inject new image into the task definition ─────────────
+      - name: 🔄  Update task definition with new image
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-def.json
+          container-name:  ${{ env.CONTAINER_NAME }}
+          image:           ${{ steps.image.outputs.uri }}
+
+      # ── Deploy updated task definition to ECS ─────────────────
+      - name: 🚀  Deploy to ECS Fargate
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition:  ${{ steps.task-def.outputs.task-definition }}
+          service:          ${{ env.ECS_SERVICE }}
+          cluster:          ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          wait-for-minutes: 10
+
+      - name: ✅  Deployment complete
+        run: |
+          echo "🎉 Muzamil's Cafe deployed successfully!"
+          echo "Image: ${{ steps.image.outputs.uri }}"
+          echo "URL:   ${{ vars.APP_URL }}"

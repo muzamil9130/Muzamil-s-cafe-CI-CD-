@@ -1,0 +1,57 @@
+{
+  "family": "cafe-muzamil-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskRole",
+
+  "containerDefinitions": [
+    {
+      "name": "cafe-app",
+      "image": "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cafe-muzamil:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "hostPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT",     "value": "5000" }
+      ],
+      "secrets": [
+        {
+          "name":      "MONGODB_URI",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:YOUR_ACCOUNT_ID:secret:cafe/MONGODB_URI"
+        },
+        {
+          "name":      "GEMINI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:YOUR_ACCOUNT_ID:secret:cafe/GEMINI_API_KEY"
+        },
+        {
+          "name":      "APP_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:YOUR_ACCOUNT_ID:secret:cafe/APP_URL"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":         "/ecs/cafe-muzamil",
+          "awslogs-region":        "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command":     ["CMD-SHELL", "wget -qO- http://localhost:5000/api/health || exit 1"],
+        "interval":    30,
+        "timeout":     10,
+        "startPeriod": 20,
+        "retries":     3
+      }
+    }
+  ]
+}
