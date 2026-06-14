@@ -4,8 +4,8 @@
 
 **A full-stack restaurant web application with online ordering, table reservations, and AI-powered assistance — containerised with Docker and deployed to AWS via a complete CI/CD pipeline.**
 
-[![CI – Build, Lint & Push to ECR](https://github.com/YOUR_ORG/YOUR_REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_ORG/YOUR_REPO/actions/workflows/ci.yml)
-[![CD – Deploy to AWS ECS](https://github.com/YOUR_ORG/YOUR_REPO/actions/workflows/cd.yml/badge.svg)](https://github.com/YOUR_ORG/YOUR_REPO/actions/workflows/cd.yml)
+[![CI – Build, Lint & Push to ECR](https://github.com/muzamil9130/Muzamil-s-cafe-CI-CD-/actions/workflows/ci.yml/badge.svg)](https://github.com/muzamil9130/Muzamil-s-cafe-CI-CD-/actions/workflows/ci.yml)
+[![CD – Deploy to AWS ECS](https://github.com/muzamil9130/Muzamil-s-cafe-CI-CD-/actions/workflows/cd.yml/badge.svg)](https://github.com/muzamil9130/Muzamil-s-cafe-CI-CD-/actions/workflows/cd.yml)
 ![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=node.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)
